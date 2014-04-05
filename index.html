@@ -215,6 +215,10 @@
         stream: function(){
             var key_stream = [],character;
             var msg_length = this.get_cleartext().length;
+            if(msg_length===0){
+                $('.keystream').html("<p>You have not entered any plaintext.</p>");
+                return null;
+            }
             var i = 0;
             while(i<msg_length){
             character = this.get_character();
