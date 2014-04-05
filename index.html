@@ -24,15 +24,17 @@
         <h1>Solitaire Cipher Demo</h1>
         <div class="row">
   <div class="col-lg-12 well">
-    <input type="text" class="form-control" placeholder="Plain Text">
+    <input type="text" class="form-control" id="cleartext" placeholder="Plain Text">
+    <p class="text-danger">First we reduce our plain text to a series of lower case letters, removing spaces and punctuation.</p>
+    <p class="text-danger"> And then convert this to a number representing each character one through twenty six.</p>
   </div>
   <hr>
 </div>
 <div class="row well">
     <div class="btn-group col-lg-12">
              <button type="button" class="btn btn-warning" onclick="CardDeck.shuffle()">Shuffle</button>
-            <button type="button" class="btn btn-success" onclick="CardDeck.stream(15)">Generate Key Stream</button>
-            <button type="button" class="btn btn-success" onclick="CardDeck.cycle_a()">Play</button>
+            <button type="button" class="btn btn-success" onclick="CardDeck.stream()">Generate Key Stream</button>
+            <button type="button" class="btn btn-success" onclick="CardDeck.learn()">Step Through Key Stream Generation</button>
         </div>
 </div>
 
@@ -58,6 +60,7 @@
 	<script>
     var CardDeck ={
     	order: [],
+        current_step: 0,
     	init: function(){
     		for(var i=1;i<=54;i++){
     			this.order.push(i);
@@ -73,6 +76,14 @@
             	this.draw();
             return o;
 },
+        get_cleartext: function(){
+            var cleartext = $('#cleartext').val();
+            return cleartext;
+        },
+        char_to_num: function(character){
+            var alphabet = "abcdefghijklmnopqrstuvwxyz";
+            return alphabet.indexOf(character)+1;
+        },
         cycle_a: function(order){
             var a_joker,b_joker,difference,top_set,bottom_set,middle_set;
             a_joker = this.order.indexOf(53);
@@ -90,7 +101,8 @@
                 this.order[a_joker] = swap;
             }
             console.log(this.order);
-            $('.step-info').html("<p>First: Find Joker A, in this case our red joker and move it one card down the deck, from the top. If it is the last card, move it to the top spot on the deck.</p>");
+            this.current_step = 1;
+            $('.step-info').html("<p>Step One: Find Joker A, in this case our red joker and move it one card down the deck, from the top. If it is the last card, move it to the top spot on the deck.</p>");
             this.draw();
         },
         cycle_b: function(order){
@@ -109,6 +121,8 @@
                 this.order[b_joker] = swap;
             }
             console.log(this.order);
+            this.current_step = 2;
+            $('.step-info').html("<p>Step Two: Find Joker B, in this case our black joker and move it two cards down the deck, from the top. If it is the second to last card, move it to the top spot on the deck, or if it is the last card it will become the second to the top.</p>");
             this.draw();
         },
         tripple_cut: function(order){
@@ -126,13 +140,19 @@
             middle_set = this.order.slice(a_joker,b_joker+1);
             }
             this.order.length = 0;
+            this.current_step = 3;
+            $('.step-info').html("<p>Step Three: Perform a tripple cut around the two jokers.</p>");
             this.order = bottom_set.concat(middle_set,top_set);
             console.log(this.order);
             this.draw();
         },
         find_key: function(order){
         var top_card = this.order[0];
-        return this.order[top_card+2];
+        var key_char = this.order[top_card+2];
+        $('.step-info').html("<p>Step Five: Our character for this iteration of the key stream is: <strong>"+key_char+"</strong></p>");
+        this.current_step = 0;
+        console.log(key_char);
+        return key_char;
         },
         count_cut: function(){
             //Step Four- Find number of the bottom card, count down this many cards from the top and cut to the bottom, but above the last card. 
@@ -145,13 +165,14 @@
             this.order = middle_set.concat(top_set,bottom_card);
             }
             console.log(this.order,this.order.length);
+            $('.step-info').html("<p>Step Four: Perform a count cut.</p>");
+            this.current_step = 4;
             this.draw();
   
         },
 
         get_character: function(order){
             this.cycle_a();
-
             this.cycle_b();
             this.tripple_cut();   
             this.count_cut(); 
@@ -166,7 +187,7 @@
         draw: function(){
         	$('.cards').empty();
             _.each(this.order,function(card){
-            $('.cards').append("<div class='card "+ CardDeck.get_suit_and_rank(card).rank+CardDeck.get_suit_and_rank(card).suit+ "'data-card=''></div>")
+            $('.cards').append("<div class='card "+ CardDeck.get_suit_and_rank(card).rank+CardDeck.get_suit_and_rank(card).suit+ "'data-card='"+card+"'></div>")
             });
         },
         get_suit_and_rank: function(card){
@@ -191,8 +212,9 @@
             }
         	return{suit:suit,rank:rank}
         },
-        stream: function(msg_length){
+        stream: function(){
             var key_stream = [],character;
+            var msg_length = this.get_cleartext().length;
             var i = 0;
             while(i<msg_length){
             character = this.get_character();
@@ -204,6 +226,28 @@
             }
             console.log(key_stream);
             return key_stream;
+        },
+        learn: function(){
+        switch(this.current_step){
+            case 0:
+            this.cycle_a();
+            break;
+            case 1:
+            this.cycle_b();
+            break;
+            case 2:
+            this.tripple_cut();
+            break;
+            case 3:
+            this.count_cut();
+            break;
+            case 4:
+            this.find_key();
+            break;
+        }
+        },
+        convert: function(){
+
         }
 
     }
