@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Solitaire Cipher</title>
+	<link rel="stylesheet" href="https://ajax.googleapis.com/ajax/libs/jqueryui/1.10.4/themes/smoothness/jquery-ui.css" />
+	<style>
+.card{
+	width:125px;
+	height:181px;
+	position:relative;
+	margin:5px;
+	background-color:gray;
+	float:left;
+}
+	</style>
+</head>
+<body>
+	<div class="cards"></div>
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js"></script>
+	<script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.10.4/jquery-ui.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.6.0/underscore-min.js"></script>
+	<script>
+    var CardDeck ={
+    	order: [],
+    	init: function(){
+    		for(var i=1;i<=54;i++){
+    			this.order.push(i);
+    		}
+    		this.order = this.shuffle(this.order);
+    		this.draw();
+    	},
+        shuffle: function shuffle(o){ //v1.0
+        	if(!o){
+        		o = this.order;
+        	}
+            for(var j, x, i = o.length; i; j = Math.floor(Math.random() * i), x = o[--i], o[i] = o[j], o[j] = x);
+            	this.draw();
+            return o;
+},
+        get_character: function(order){
+            a_joker = this.order.indexOf(53);
+            b_joker = this.order.indexOf(54);
+            //Step One: Swap A Joker with the Card Below It
+            if(a_joker<53){
+                swap = this.order[a_joker+1];
+                this.order[a_joker+1] = 53;
+                this.order[a_joker] = swap;
+            }
+            else{
+                difference = 53 - a_joker;
+                swap = this.order[difference];
+                this.order[difference] = 53;
+                this.order[a_joker] = swap;
+            }
+            //Step Two: Swap B Joker with the Card Two Below It
+            if(b_joker<52){
+                swap = this.order[b_joker+2];
+                this.order[b_joker+2] = 54;
+                this.order[b_joker] = swap;
+            }
+            else{
+                difference = (b_joker-54);
+                swap = this.order[difference+2];
+                this.order[difference] = 54;
+                this.order[b_joker] = swap;
+            }
+            a_joker = this.order.indexOf(53);
+            b_joker = this.order.indexOf(54);
+            //Step Three: Triple Cut Cards Above Top Joker and Below Bottom Joker
+            if(a_joker>b_joker){
+                top_set = this.order.slice(0,b_joker);
+                bottom_set = this.order.slice(a_joker+1);
+            }
+            else{
+            top_set = this.order.slice(0,a_joker);
+            bottom_set = this.order.slice(b_joker+1);
+            }
+            //Step Four
+            bottom_card = this.order[53];
+
+            this.draw();
+            console.log(a_joker,b_joker,top_set,bottom_set,bottom_card);
+            keystreamChar = null
+            return keystreamChar;
+        },
+        draw: function(){
+        	$('.cards').empty();
+            _.each(this.order,function(card){
+            $('.cards').append("<div class='card' data-card=''>"+card+CardDeck.get_suit_and_rank(card).rank+CardDeck.get_suit_and_rank(card).suit+"</div>")
+            });
+        },
+        get_suit_and_rank: function(card){
+        	var suit,rank,rank_position;
+        	var ranks = ["ace","two","three","four","five","six","seven","eight","nine","ten","jack","queen","king"];
+        	if(card>52){return {rank:"joker", suit:""}}
+        		else{
+        			rank_position = (card-1)%13;
+        			rank = ranks[rank_position]
+        		}
+            if(card<=13){
+            	suit = "clubs"
+            }
+            else if(card>=14 && card<=26){
+            	suit = "diamonds"
+            }
+            else if(card>=27 && card<=39){
+                suit = "hearts"
+            }
+            else{
+                suit = "spades"
+            }
+        	return{suit:suit,rank:rank}
+        },
+        stream: function(){
+            for(var i =0;i<1000;i++)
+            this.get_character();
+        }
+
+    }
+
+    $(document).ready(function(){
+        CardDeck.init();
+    });
+	</script>
+</body>
+</html>
