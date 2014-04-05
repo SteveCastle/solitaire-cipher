@@ -4,14 +4,16 @@
 	<meta charset="UTF-8">
 	<title>Solitaire Cipher</title>
 	<link rel="stylesheet" href="https://ajax.googleapis.com/ajax/libs/jqueryui/1.10.4/themes/smoothness/jquery-ui.css" />
+    <link rel="stylesheet" href="css/cards.css" />
 	<style>
 .card{
-	width:125px;
-	height:181px;
+	width:62px;
+	height:90px;
 	position:relative;
 	margin:5px;
-	background-color:gray;
 	float:left;
+    background-size:100%;
+    color:red;
 }
 	</style>
 </head>
@@ -38,7 +40,8 @@
             	this.draw();
             return o;
 },
-        get_character: function(order){
+        cycle_a: function(order){
+            var a_joker,b_joker,difference,top_set,bottom_set,middle_set;
             a_joker = this.order.indexOf(53);
             b_joker = this.order.indexOf(54);
             //Step One: Swap A Joker with the Card Below It
@@ -48,52 +51,94 @@
                 this.order[a_joker] = swap;
             }
             else{
-                difference = 53 - a_joker;
+                difference = a_joker - 53;
                 swap = this.order[difference];
                 this.order[difference] = 53;
                 this.order[a_joker] = swap;
             }
+            console.log(this.order);
+            this.draw();
+        },
+        cycle_b: function(order){
             //Step Two: Swap B Joker with the Card Two Below It
+            a_joker = this.order.indexOf(53);
+            b_joker = this.order.indexOf(54);
             if(b_joker<52){
                 swap = this.order[b_joker+2];
                 this.order[b_joker+2] = 54;
                 this.order[b_joker] = swap;
             }
             else{
-                difference = (b_joker-54);
-                swap = this.order[difference+2];
-                this.order[difference] = 54;
+                difference = (b_joker-53);
+                swap = this.order[difference+1];
+                this.order[difference+1] = 54;
                 this.order[b_joker] = swap;
             }
+            console.log(this.order);
+            this.draw();
+        },
+        tripple_cut: function(){
+            //Step Three: Triple Cut Cards Above Top Joker and Below Bottom Joker
             a_joker = this.order.indexOf(53);
             b_joker = this.order.indexOf(54);
-            //Step Three: Triple Cut Cards Above Top Joker and Below Bottom Joker
             if(a_joker>b_joker){
                 top_set = this.order.slice(0,b_joker);
                 bottom_set = this.order.slice(a_joker+1);
+                middle_set = this.order.slice(b_joker,a_joker+1);
             }
             else{
             top_set = this.order.slice(0,a_joker);
             bottom_set = this.order.slice(b_joker+1);
+            middle_set = this.order.slice(a_joker,b_joker+1);
             }
-            //Step Four
-            bottom_card = this.order[53];
-
+            this.order.length = 0;
+            this.order = bottom_set.concat(middle_set,top_set);
+            console.log(this.order);
             this.draw();
-            console.log(a_joker,b_joker,top_set,bottom_set,bottom_card);
-            keystreamChar = null
+        },
+        find_key: function(){
+        var top_card = this.order[0];
+        return this.order[top_card+2];
+        },
+        count_cut: function(){
+            //Step Four- Find number of the bottom card, count down this many cards from the top and cut to the bottom, but above the last card. 
+            bottom_card = this.order[53];
+            if(bottom_card<53){
+            top_set = this.order.slice(0,bottom_card);
+            middle_set = this.order.slice(bottom_card,53);
+            console.log(bottom_card,top_set,middle_set);
+            this.order.length = 0;
+            this.order = middle_set.concat(top_set,bottom_card);
+            }
+            console.log(this.order,this.order.length);
+            this.draw();
+  
+        },
+
+        get_character: function(order){
+            this.cycle_a();
+
+            this.cycle_b();
+            this.tripple_cut();   
+            this.count_cut(); 
+            keystreamChar = this.find_key();
+            if (keystreamChar<53){
             return keystreamChar;
+            }else{
+                return null;
+            }
+
         },
         draw: function(){
         	$('.cards').empty();
             _.each(this.order,function(card){
-            $('.cards').append("<div class='card' data-card=''>"+card+CardDeck.get_suit_and_rank(card).rank+CardDeck.get_suit_and_rank(card).suit+"</div>")
+            $('.cards').append("<div class='card "+ CardDeck.get_suit_and_rank(card).rank+CardDeck.get_suit_and_rank(card).suit+ "'data-card=''></div>")
             });
         },
         get_suit_and_rank: function(card){
         	var suit,rank,rank_position;
         	var ranks = ["ace","two","three","four","five","six","seven","eight","nine","ten","jack","queen","king"];
-        	if(card>52){return {rank:"joker", suit:""}}
+        	if(card>52){return {rank:"joker", suit:card}}
         		else{
         			rank_position = (card-1)%13;
         			rank = ranks[rank_position]
