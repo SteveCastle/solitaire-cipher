@@ -3,6 +3,7 @@
 <head>
 	<meta charset="UTF-8">
 	<title>Solitaire Cipher</title>
+    <link rel="stylesheet" href="https://netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css" />
 	<link rel="stylesheet" href="https://ajax.googleapis.com/ajax/libs/jqueryui/1.10.4/themes/smoothness/jquery-ui.css" />
     <link rel="stylesheet" href="css/cards.css" />
 	<style>
@@ -18,7 +19,39 @@
 	</style>
 </head>
 <body>
-	<div class="cards"></div>
+
+	<div class="container">
+        <h1>Solitaire Cipher Demo</h1>
+        <div class="row">
+  <div class="col-lg-12 well">
+    <input type="text" class="form-control" placeholder="Plain Text">
+  </div>
+  <hr>
+</div>
+<div class="row well">
+    <div class="btn-group col-lg-12">
+             <button type="button" class="btn btn-warning" onclick="CardDeck.shuffle()">Shuffle</button>
+            <button type="button" class="btn btn-success" onclick="CardDeck.stream(15)">Generate Key Stream</button>
+            <button type="button" class="btn btn-success" onclick="CardDeck.cycle_a()">Play</button>
+        </div>
+</div>
+
+        <div class="row">
+            <div class="col-lg-12 well">
+                <h3>KeyStream</h3>
+                <div class="well keystream"></div>
+                <div class="alert alert-info step-info"></div>
+                <div class="cards"></div>
+            </div>
+        </div>
+        <div class="row">
+  <div class="col-lg-12 well">
+    <input type="text" class="form-control" placeholder="Cipher Text">
+  </div>
+  <hr>
+</div>
+        
+    </div>
 	<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js"></script>
 	<script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.10.4/jquery-ui.min.js"></script>
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.6.0/underscore-min.js"></script>
@@ -32,7 +65,7 @@
     		this.order = this.shuffle(this.order);
     		this.draw();
     	},
-        shuffle: function shuffle(o){ //v1.0
+        shuffle: function shuffle(o){
         	if(!o){
         		o = this.order;
         	}
@@ -57,6 +90,7 @@
                 this.order[a_joker] = swap;
             }
             console.log(this.order);
+            $('.step-info').html("<p>First: Find Joker A, in this case our red joker and move it one card down the deck, from the top. If it is the last card, move it to the top spot on the deck.</p>");
             this.draw();
         },
         cycle_b: function(order){
@@ -77,7 +111,7 @@
             console.log(this.order);
             this.draw();
         },
-        tripple_cut: function(){
+        tripple_cut: function(order){
             //Step Three: Triple Cut Cards Above Top Joker and Below Bottom Joker
             a_joker = this.order.indexOf(53);
             b_joker = this.order.indexOf(54);
@@ -96,7 +130,7 @@
             console.log(this.order);
             this.draw();
         },
-        find_key: function(){
+        find_key: function(order){
         var top_card = this.order[0];
         return this.order[top_card+2];
         },
@@ -125,7 +159,7 @@
             if (keystreamChar<53){
             return keystreamChar;
             }else{
-                return null;
+                return false;
             }
 
         },
@@ -157,9 +191,19 @@
             }
         	return{suit:suit,rank:rank}
         },
-        stream: function(){
-            for(var i =0;i<1000;i++)
-            this.get_character();
+        stream: function(msg_length){
+            var key_stream = [],character;
+            var i = 0;
+            while(i<msg_length){
+            character = this.get_character();
+            if(character){
+            key_stream.push(character);
+            $('.keystream').html("<p>"+key_stream+"</p>");
+            i++;
+            }                
+            }
+            console.log(key_stream);
+            return key_stream;
         }
 
     }
