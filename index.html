@@ -24,9 +24,9 @@
         <h1>Solitaire Cipher Demo</h1>
         <div class="row">
   <div class="col-lg-12 well">
-    <input type="text" class="form-control" id="cleartext" placeholder="Plain Text">
-    <p class="text-danger">First we reduce our plain text to a series of lower case letters, removing spaces and punctuation.</p>
-    <div class="well reduced-text"></div>
+    <input type="text" class="form-control" id="cleartext" placeholder="Plain Text or Cipher Text if decrypting.">
+    <p class="text-danger">First we reduce our plain text to a series of letters ignoring case and removing spaces/punctuation.</p>
+    <div class="well reduced-text" id="reduced-text"></div>
     <p class="text-danger"> And then convert this to a number representing each character one through twenty six.</p>
     <div class="well int-text"></div>
   </div>
@@ -37,18 +37,23 @@
     <div class="btn-toolbar" role="toolbar">
     <div class="btn-group col-lg-6">
              <button type="button" class="btn btn-warning" onclick="CardDeck.shuffle()">Shuffle</button>
-             <button type="button" class="btn btn-warning" onclick="CardDeck.shuffle()">Use Demo Key Deck One</button>
-             <button type="button" class="btn btn-warning" onclick="CardDeck.shuffle()">Use Demo Key Deck Two</button>
+             <button type="button" class="btn btn-warning demo1" onclick="CardDeck.set_deck(1)">Use Demo Key Deck One</button>
+             <button type="button" class="btn btn-warning demo2" onclick="CardDeck.set_deck(2)">Use Demo Key Deck Two</button>
         </div>
         <div class="btn-group">            
             <button type="button" class="btn btn-success" onclick="CardDeck.stream()">Generate Key Stream</button>
-            <button type="button" class="btn btn-success" onclick="CardDeck.learn()">Step Through Key Stream Generation</button></div>
+            <button type="button" class="btn btn-success" onclick="CardDeck.learn()">Step Through Key Stream</button>
+            <button type="button" class="btn btn-danger" onclick="CardDeck.encrypt()">Encrypt</button>
+            <button type="button" class="btn btn-danger" onclick="CardDeck.decrypt()">DeCrypt</button>
+
+        </div>
         </div>
 </div>
 
         <div class="row">
             <div class="col-lg-12 well">
                 <h3>KeyStream</h3>
+                <p class="text-danger">We need to generate a keystream with n characters, where n is the length of our clear text.  We do this by starting with a keyed deck of cards, the key is the order of the cards. To generate a key stream character, we follow a shuffling algorithm with 5 steps starting from the keyed order. Then repeat the algorithm starting from the deck state left following the previous character.</p>
                 <div class="well keystream"></div>
                 <div class="alert alert-info step-info"></div>
                 <h3>Key Deck</h3>
@@ -57,7 +62,9 @@
         </div>
         <div class="row">
   <div class="col-lg-12 well">
-    <input type="text" class="form-control" placeholder="Cipher Text">
+    <h3>Output</h3>
+    <p class="text-danger">To encode our plain text into cipher text we add the keystream value to the plain text value with modulo 26 addition. Then convert the number 1-26 back to its corresponding letter. If decrypthing we subtract the keystream value in the same way.</p>
+    <input type="text" class="form-control" id="cipherText" placeholder="Cipher Text">
   </div>
   <hr>
 </div>
@@ -69,6 +76,9 @@
 	<script>
     var CardDeck ={
     	order: [],
+        clearText: [],
+        keyStream: [],
+        cipherText: [],
         current_step: 0,
     	init: function(){
     		for(var i=1;i<=54;i++){
@@ -82,18 +92,31 @@
         		o = this.order;
         	}
             for(var j, x, i = o.length; i; j = Math.floor(Math.random() * i), x = o[--i], o[i] = o[j], o[j] = x);
+                $('.demo1').removeClass('active');
+                $('.demo2').removeClass('active');
             	this.draw();
+
             return o;
 },
         set_deck: function(deck){
+            if(deck===1){
+            this.order = [26, 9, 17, 54, 11, 18, 27, 6, 37, 5, 51, 36, 19, 13, 22, 4, 15, 46, 3, 16, 43, 52, 32, 29, 45, 10, 47, 14, 8, 39, 41, 20, 38, 35, 23, 7, 30, 2, 48, 53, 1, 33, 31, 28, 40, 25, 42, 24, 34, 44, 50, 49, 12, 21];
+            $('.demo2').removeClass('active');
+            $('.demo1').addClass('active');
+            }else{
+                this.order = [15, 52, 33, 23, 2, 37, 20, 31, 3, 29, 45, 26, 10, 16, 30, 41, 13, 1, 53, 42, 4, 17, 36, 48, 32, 28, 50, 14, 27, 54, 39, 24, 46, 35, 44, 9, 12, 43, 40, 7, 49, 25, 19, 22, 51, 47, 6, 18, 38, 21, 34, 11, 8, 5];
+            $('.demo1').removeClass('active');
+            $('.demo2').addClass('active');
+            }
+            this.draw();
         },
         get_cleartext: function(){
-            var cleartext = $('#cleartext').val();
+            var cleartext = $('#reduced-text').text();
             return cleartext;
         },
-        char_to_num: function(character){
+        num_to_char: function(character){
             var alphabet = "abcdefghijklmnopqrstuvwxyz";
-            return alphabet.indexOf(character)+1;
+            return alphabet.charAt(character-1);
         },
         cycle_a: function(order){
             var a_joker,b_joker,difference,top_set,bottom_set,middle_set;
@@ -113,7 +136,6 @@
             }
             console.log(this.order);
             this.current_step = 1;
-            $('.step-info').html("<p>Step One: Find Joker A, in this case our red joker and move it one card down the deck, from the top. If it is the last card, move it to the top spot on the deck.</p>");
             this.draw();
         },
         cycle_b: function(order){
@@ -133,7 +155,7 @@
             }
             console.log(this.order);
             this.current_step = 2;
-            $('.step-info').html("<p>Step Two: Find Joker B, in this case our black joker and move it two cards down the deck, from the top. If it is the second to last card, move it to the top spot on the deck, or if it is the last card it will become the second to the top.</p>");
+
             this.draw();
         },
         tripple_cut: function(order){
@@ -152,7 +174,6 @@
             }
             this.order.length = 0;
             this.current_step = 3;
-            $('.step-info').html("<p>Step Three: Perform a tripple cut around the two jokers.</p>");
             this.order = bottom_set.concat(middle_set,top_set);
             console.log(this.order);
             this.draw();
@@ -160,12 +181,20 @@
         find_key: function(order){
         var top_card = this.order[0];
         var key_char = this.order[top_card+2];
-        $('.step-info').html("<p>Step Five: Our character for this iteration of the key stream is: <strong>"+key_char+"</strong></p>");
         this.current_step = 0;
+            if (key_char<53){
+            }else
+            {
+                return false;
+            }
+
         if (key_char>26){
             key_char = key_char - 26;
         }
+
         console.log(key_char);
+        this.keyStream.push(key_char);
+        $('.keystream').html("<p>"+this.keyStream+"</p>");
         return key_char;
         },
         count_cut: function(){
@@ -179,7 +208,6 @@
             this.order = middle_set.concat(top_set,bottom_card);
             }
             console.log(this.order,this.order.length);
-            $('.step-info').html("<p>Step Four: Perform a count cut.</p>");
             this.current_step = 4;
             this.draw();
   
@@ -190,13 +218,8 @@
             this.cycle_b();
             this.tripple_cut();   
             this.count_cut(); 
-            keystreamChar = this.find_key();
-            if (keystreamChar<53){
-            return keystreamChar;
-            }else{
-                return false;
-            }
-
+            var result = this.find_key();
+            return result
         },
         draw: function(){
         	$('.cards').empty();
@@ -227,51 +250,94 @@
         	return{suit:suit,rank:rank}
         },
         stream: function(){
-            var key_stream = [],character;
+            var character;
             var msg_length = this.get_cleartext().length;
             if(msg_length===0){
-                $('.keystream').html("<p>You have not entered any plaintext.</p>");
+                $('.keystream').html("<p>You have not entered any plaintext. I do not know how many characters you need yet!</p>");
                 return null;
             }
             var i = 0;
             while(i<msg_length){
             character = this.get_character();
             if(character){
-            key_stream.push(character);
-            $('.keystream').html("<p>"+key_stream+"</p>");
             i++;
             }                
             }
-            console.log(key_stream);
-            return key_stream;
+            console.log(this.keyStream);
+            return this.keyStream;
         },
         learn: function(){
         switch(this.current_step){
             case 0:
             this.cycle_a();
+            $('.step-info').html("<p>Step One: Find Joker A, in this case our red joker and move it one card down the deck, from the top. If it is the last card, move it to the top spot on the deck.</p>");
             break;
             case 1:
             this.cycle_b();
+         $('.step-info').html("<p>Step Two: Find Joker B, in this case our black joker and move it two cards down the deck, from the top. If it is the second to last card, move it to the top spot on the deck, or if it is the last card it will become the second to the top.</p>");
             break;
             case 2:
             this.tripple_cut();
+            $('.step-info').html("<p>Step Three: Perform a tripple cut around the two jokers. Take all the cards above the first joker and swap them with all the cards below the second joker. In this case it does not matter if it is the red or black joker, just which comes first and second.</p>");
             break;
             case 3:
             this.count_cut();
+            $('.step-info').html("<p>Step Four: Perform a count cut. Find the number value of the bottom card, select this many cards off the top of the deck and move to the bottom, but still above the previous bottom card.</p>");
             break;
             case 4:
-            this.find_key();
+            var key_char = this.find_key();
+        $('.step-info').html("<p>Step Five: To find find our character for this iteration of the key stream find the value of the top card, then count down from the top that number of cards, then look at the next card after that, this is our keystream character: <strong>"+key_char+"</strong></p>");
             break;
         }
         },
-        convert: function(){
-
+        encrypt: function(){
+         var current;
+         if(this.keyStream.length===0){
+            alert("Generate a key stream first.")
+            return null;
         }
-
+        for(var i=0;i<this.clearText.length;i++){
+            current = this.clearText[i] + this.keyStream[i];
+            if(current>26){
+                current = current - 26;
+            }
+            console.log(this.clearText[i], this.keyStream[i]);
+            this.cipherText.push(this.num_to_char(current));
+            $('#cipherText').val(this.cipherText);
+            $("html, body").animate({ scrollTop: $(document).height() }, "slow");
+        }
+    },
+            decrypt: function(){
+         var current;
+         if(this.keyStream.length===0){
+            alert("Generate a key stream first.")
+            return null;
+        }
+        for(var i=0;i<this.clearText.length;i++){
+            current = this.clearText[i] - this.keyStream[i];
+            if(current<0){
+                current = current + 26;
+            }
+            console.log(this.clearText[i], this.keyStream[i]);
+            this.cipherText.push(this.num_to_char(current));
+            $('#cipherText').val(this.cipherText);
+            $("html, body").animate({ scrollTop: $(document).height() });
+        }
     }
-
+}
     $(document).ready(function(){
         CardDeck.init();
+        $( "#cleartext" ).keydown(function(e) {
+            e.preventDefault();
+            var charPressed = String.fromCharCode(e.which);
+            console.log(e);
+            var current = $(this).val();
+            if(e.which>64 && e.which<=90){
+              CardDeck.clearText.push(e.which-64);
+              $('.reduced-text').text( $('.reduced-text').text()+charPressed);
+              $('.int-text').text($('.int-text').text() + (e.which-64).toString() + " ");
+            }
+});
     });
 	</script>
 </body>
