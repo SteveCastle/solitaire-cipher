@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 	<meta charset="UTF-8">
-	<title>Solitaire Cipher</title>
+	<title>Solitaire / Pontifex Cipher</title>
     <link rel="stylesheet" href="https://netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css" />
 	<link rel="stylesheet" href="https://ajax.googleapis.com/ajax/libs/jqueryui/1.10.4/themes/smoothness/jquery-ui.css" />
     <link rel="stylesheet" href="css/cards.css" />
@@ -34,8 +34,8 @@
 </div>
 
 <div class="row well">
-    <div class="btn-toolbar" role="toolbar">
-    <div class="btn-group col-lg-6">
+    <div class="btn-toolbar col-lg-12" role="toolbar">
+    <div class="btn-group">
              <button type="button" class="btn btn-warning" onclick="CardDeck.shuffle()">Shuffle</button>
              <button type="button" class="btn btn-warning demo1" onclick="CardDeck.set_deck(1)">Use Demo Key Deck One</button>
              <button type="button" class="btn btn-warning demo2" onclick="CardDeck.set_deck(2)">Use Demo Key Deck Two</button>
@@ -340,5 +340,15 @@
 });
     });
 	</script>
+    <script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-33037053-1', 'tigerhaunt.com');
+  ga('send', 'pageview');
+
+</script>
 </body>
 </html>
